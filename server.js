@@ -12,43 +12,21 @@ app.use(express.static("public"));
 let players = {};
 let puzzles = [];
 let gameStarted = false;
-
 let gameStartTime = null;
-const GAME_DURATION = 90 * 60; // 90 minuti
+const GAME_DURATION = 90 * 60;
 let timerInterval = null;
 
-/* =========================
-   GENERAZIONE SEQUENZA
-========================= */
 function generatePuzzleSequence() {
-
+    const difficulties = ["easy", "medium", "hard", "expert"];
     let sequence = [];
 
-    // 🔹 4x4 (2x2)
-   sequence.push({
-    size: 4,
-    puzzle: "1..4.41.2..3.3.1",
-    solution: "1234341221434321"
-});
-
-    // 🔹 6x6 (2x3)
- sequence.push({
-    size: 6,
-    puzzle: "1.3..6.5.12.2.1.6..64..13..6.5.4.31.",
-    solution: "123456456123231564564231312645645312"
-});
-
-
-    // 🔹 9x9 progressivi
-    const difficulties = ["easy", "medium", "hard", "expert"];
-
-    for (let i = 0; i < 12; i++) {
-        const difficulty = difficulties[Math.floor(i / 3)];
+    for (let i = 0; i < 20; i++) {
+        const difficulty = difficulties[Math.floor(i / 5)];
         const puzzle = sudoku.getSudoku(difficulty);
 
         sequence.push({
             size: 9,
-            puzzle: puzzle.puzzle,
+            puzzle: puzzle.puzzle.replace(/-/g, "."),
             solution: puzzle.solution
         });
     }
@@ -56,9 +34,6 @@ function generatePuzzleSequence() {
     return sequence;
 }
 
-/* =========================
-   MULTIPLAYER SOCKET
-========================= */
 io.on("connection", (socket) => {
 
     socket.on("joinGame", (name) => {
@@ -72,7 +47,9 @@ io.on("connection", (socket) => {
         io.emit("updatePlayers", players);
 
         if (gameStarted) {
-            socket.emit("gameStarted", puzzles[players[socket.id].level]);
+            socket.emit("gameStarted", {
+                puzzle: puzzles[0]
+            });
         }
     });
 
@@ -84,7 +61,9 @@ io.on("connection", (socket) => {
             gameStarted = true;
             gameStartTime = Math.floor(Date.now() / 1000);
 
-            io.emit("gameStarted", puzzles[0]);
+            io.emit("gameStarted", {
+                puzzle: puzzles[0]
+            });
 
             timerInterval = setInterval(() => {
 
@@ -112,7 +91,9 @@ io.on("connection", (socket) => {
         player.level++;
 
         if (player.level < puzzles.length) {
-            socket.emit("nextPuzzle", puzzles[player.level]);
+            socket.emit("nextPuzzle", {
+                puzzle: puzzles[player.level]
+            });
         }
 
         io.emit("updatePlayers", players);
@@ -129,26 +110,22 @@ io.on("connection", (socket) => {
         delete players[socket.id];
         io.emit("updatePlayers", players);
     });
-
 });
 
-/* =========================
-   API SINGLE PLAYER
-========================= */
 app.get("/api/single/:difficulty", (req, res) => {
     const difficulty = req.params.difficulty;
     const puzzle = sudoku.getSudoku(difficulty);
 
     res.json({
         size: 9,
-        puzzle: puzzle.puzzle,
+        puzzle: puzzle.puzzle.replace(/-/g, "."),
         solution: puzzle.solution
     });
 });
 
-/* =========================
-   START SERVER
-========================= */
-server.listen(3000, () => {
-    console.log("Server attivo su http://localhost:3000");
+/* ⭐ QUESTA È LA PARTE FONDAMENTALE PER RENDER ⭐ */
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log("Server attivo sulla porta " + PORT);
 });
