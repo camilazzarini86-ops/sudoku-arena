@@ -18,7 +18,7 @@ function startGame() {
    SOCKET EVENTS
 ========================= */
 socket.on("gameStarted", (data) => {
-    loadPuzzle(data);
+    loadPuzzle(data.puzzle);
 });
 
 socket.on("nextPuzzle", (data) => {
@@ -220,3 +220,6 @@ function closeOverlay() {
 function closePodium() {
     document.getElementById("podium").classList.add("hidden");
 }
+window.onload = () => {
+    socket.emit("startGame");
+};
