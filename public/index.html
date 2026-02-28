@@ -1,37 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-    <title>Sudoku Arena</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku Arena</title>
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
 
-<div class="app">
+<div class="container">
+    <h1>🧩 Sudoku Arena</h1>
+    <p class="subtitle">Scegli la modalità di gioco
+<div class="buttons">
+    <button class="multiplayer" onclick="location.href='index.html'">
+        🎮 Multiplayer Torneo
+    </button>
 
-    <div class="header">
-        <h1>Sudoku Arena 🏆</h1>
-        <div id="timer">Tempo: 90:00</div>
-    </div>
+    <button class="single" onclick="location.href='single.html'">
+        🧠 Single Player
+    </button>
 
-    <div>
-        <div id="login" style="margin-bottom:15px;">
-            <input type="text" id="name" placeholder="Nome giocatore">
-            <button onclick="joinGame()">Entra</button>
-            <button onclick="startGame()">Avvia</button>
-        </div>
-
-        <div id="game"></div>
-    </div>
-
-    <div class="leaderboard">
-        <h2>Classifica</h2>
-        <div id="leaderboard"></div>
-    </div>
-
+    <button class="pro" onclick="location.href='pro.html'">
+        🚀 Versione PRO
+    </button>
 </div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="game.js"></script>
-
-</body>
-</html>
