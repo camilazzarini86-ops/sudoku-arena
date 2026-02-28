@@ -9,6 +9,9 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/public/home.html");
+});
 let players = {};
 let puzzles = [];
 let gameStarted = false;
