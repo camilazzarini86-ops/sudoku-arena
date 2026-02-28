@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sudoku Arena PRO</title>
+    <link rel="stylesheet" href="pro.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e3c72">
+</head>
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <h1>Sudoku Arena PRO 🏆</h1>
+        <div id="timer">Tempo: 90:00</div>
+    </div>
+
+    <div>
+        <div id="login" style="margin-bottom:15px;">
+            <input type="text" id="name" placeholder="Nome giocatore">
+            <button onclick="joinGame()">Entra</button>
+            <button onclick="startGame()">Avvia</button>
+        </div>
+
+        <div id="game"></div>
+    </div>
+
+    <div class="leaderboard">
+        <h2>Classifica</h2>
+        <div id="leaderboard"></div>
+    </div>
+
+</div>
+
+<!-- Overlay Livello -->
+<div id="overlay" class="overlay hidden">
+    <div class="overlay-content">
+        <h2>🎉 Livello Completato!</h2>
+        <button onclick="closeOverlay()">Continua</button>
+    </div>
+</div>
+
+<!-- Podio Finale -->
+<div id="podium" class="overlay hidden">
+    <div class="podium-content">
+        <h2>🏆 CLASSIFICA FINALE 🏆</h2>
+        <div id="podium-list"></div>
+        <button onclick="closePodium()">Chiudi</button>
+    </div>
+</div>
+
+<audio id="victorySound">
+    <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
+</audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="pro.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => console.log("Service Worker registrato"));
+}
+</script>
+
+</body>
+</html>
