@@ -9,6 +9,10 @@ function joinGame() {
     const password = document.getElementById("password").value;
 
     socket.emit("joinGame", { name, password });
+
+    // 👇 Mostra attesa
+    document.getElementById("waiting").style.display = "block";
+    document.getElementById("login").style.display = "none";
 }
 socket.on("teacherMode", () => {
     document.getElementById("startBtn").style.display = "block";
@@ -21,9 +25,16 @@ function startGame() {
 /* =========================
    SOCKET EVENTS
 ========================= */
-socket.on("gameStarted", (data) => {
-    loadPuzzle(data.puzzle);
-});
+function joinGame() {
+    const name = document.getElementById("name").value;
+    const password = document.getElementById("password").value;
+
+    socket.emit("joinGame", { name, password });
+
+    // 👇 Mostra attesa
+    document.getElementById("waiting").style.display = "block";
+    document.getElementById("login").style.display = "none";
+}
 
 socket.on("nextPuzzle", (data) => {
     loadPuzzle(data);
@@ -224,6 +235,4 @@ function closeOverlay() {
 function closePodium() {
     document.getElementById("podium").classList.add("hidden");
 }
-window.onload = () => {
-    socket.emit("startGame");
-};
+
