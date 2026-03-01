@@ -1,7 +1,9 @@
 const socket = io();
 let currentPuzzle = null;
 
-/* LOGIN */
+/* =========================
+   LOGIN
+========================= */
 function joinGame() {
     const name = document.getElementById("name").value;
     const password = document.getElementById("password").value;
@@ -12,7 +14,9 @@ function joinGame() {
     document.getElementById("waiting").style.display = "block";
 }
 
-/* DOCENTE */
+/* =========================
+   DOCENTE
+========================= */
 socket.on("teacherMode", () => {
     document.getElementById("startBtn").style.display = "block";
     document.getElementById("waiting").style.display = "none";
@@ -22,13 +26,17 @@ function startGame() {
     socket.emit("startGame");
 }
 
-/* PARTITA */
+/* =========================
+   PARTITA AVVIATA
+========================= */
 socket.on("gameStarted", (puzzle) => {
     document.getElementById("waiting").style.display = "none";
     loadPuzzle(puzzle);
 });
 
-/* TIMER */
+/* =========================
+   TIMER
+========================= */
 socket.on("timerUpdate", (seconds) => {
 
     if (seconds <= 0) {
@@ -46,22 +54,29 @@ socket.on("timerUpdate", (seconds) => {
         String(sec).padStart(2, "0");
 });
 
-/* CLASSIFICA */
+/* =========================
+   CLASSIFICA
+========================= */
 socket.on("updatePlayers", (players) => {
 
     const ranking = Object.values(players)
-        .sort((a,b)=>b.score-a.score);
+        .sort((a, b) => b.score - a.score);
 
     let html = "";
 
-    ranking.forEach((p,i)=>{
-        html += `<div>${p.name} - ${p.score}</div>`;
+    ranking.forEach((p, i) => {
+        const medals = ["🥇", "🥈", "🥉"];
+        html += `
+            <div style="display:flex;justify-content:space-between;padding:5px 0;">
+                <span>${medals[i] || ""} ${p.name}</span>
+                <span>${p.score}</span>
+            </div>
+        `;
     });
 
     document.getElementById("leaderboard").innerHTML = html;
 });
 
-/* GRIGLIA */
 function loadPuzzle(puzzleData) {
 
     currentPuzzle = puzzleData;
@@ -72,25 +87,57 @@ function loadPuzzle(puzzleData) {
     const container = document.getElementById("game");
     container.innerHTML = "";
     container.style.display = "grid";
-    container.style.gridTemplateColumns = `repeat(${size}, 40px)`;
+    container.style.gridTemplateColumns = `repeat(${size}, 45px)`;
+
+    let blockRows, blockCols;
+
+    if (size === 4) {
+        blockRows = 2;
+        blockCols = 2;
+    } else if (size === 6) {
+        blockRows = 2;
+        blockCols = 3;
+    } else {
+        blockRows = 3;
+        blockCols = 3;
+    }
 
     puzzle.split("").forEach((cell, index) => {
 
         const input = document.createElement("input");
         input.maxLength = 1;
         input.className = "cell";
-        input.style.width = "40px";
-        input.style.height = "40px";
+        input.style.width = "45px";
+        input.style.height = "45px";
         input.style.textAlign = "center";
+        input.style.fontSize = "18px";
+        input.style.border = "1px solid #999";
+
+        const row = Math.floor(index / size);
+        const col = index % size;
+
+        if (row % blockRows === 0)
+            input.style.borderTop = "3px solid black";
+
+        if (col % blockCols === 0)
+            input.style.borderLeft = "3px solid black";
+
+        if ((row + 1) % blockRows === 0)
+            input.style.borderBottom = "3px solid black";
+
+        if ((col + 1) % blockCols === 0)
+            input.style.borderRight = "3px solid black";
 
         if (cell !== ".") {
             input.value = cell;
             input.disabled = true;
+            input.style.backgroundColor = "#f2f2f2";
+            input.style.fontWeight = "bold";
         }
 
         input.addEventListener("input", (event) => {
 
-            if (!/^[1-9]$/.test(event.target.value)) {
+            if (!new RegExp(`^[1-${size}]$`).test(event.target.value)) {
                 event.target.value = "";
                 return;
             }
@@ -107,10 +154,11 @@ function loadPuzzle(puzzleData) {
 
             if (attempt === currentPuzzle.solution) {
                 socket.emit("correctSolution");
-                alert("Livello completato!");
+                alert("🎉 Livello completato!");
             }
         });
 
         container.appendChild(input);
     });
 }
+        

@@ -19,7 +19,25 @@ const GAME_DURATION = 90 * 60;
 const TEACHER_PASSWORD = "DOCENTE123";
 let teacherSocketId = null;
 
-function generatePuzzle() {
+function generatePuzzleBySize(size) {
+
+    if (size === 4) {
+        return {
+            size: 4,
+            puzzle: "1..4.3....2.4..1.",
+            solution: "1234432121344321"
+        };
+    }
+
+    if (size === 6) {
+        return {
+            size: 6,
+            puzzle: "1..4..4..1..2..5..5..2..3..6..6..3..",
+            solution: "123456456123234561561234345612612345"
+        };
+    }
+
+    // 9x9 generato automaticamente
     const puzzle = sudoku.getSudoku("easy");
 
     return {
@@ -33,6 +51,8 @@ io.on("connection", (socket) => {
 
     socket.on("joinGame", (data) => {
 
+     console.log("JOIN DATA:", data);   // 👈 AGGIUNGI QUESTO
+
         const name = data.name;
         const password = data.password;
 
@@ -42,6 +62,7 @@ io.on("connection", (socket) => {
         };
 
         if (password === TEACHER_PASSWORD) {
+           console.log("DOCENTE RICONOSCIUTO");  // 👈 AGGIUNGI QUESTO
             teacherSocketId = socket.id;
             socket.emit("teacherMode");
         }
