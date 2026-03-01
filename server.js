@@ -13,48 +13,32 @@ let players = {};
 let puzzles = [];
 let gameStarted = false;
 let gameStartTime = null;
-const GAME_DURATION = 90 * 60;
 let timerInterval = null;
 
-let teacherSocketId = null;
+const GAME_DURATION = 90 * 60;
 const TEACHER_PASSWORD = "DOCENTE123";
+let teacherSocketId = null;
 
-function generatePuzzleSequence() {
-    const difficulties = ["easy", "medium", "hard", "expert"];
-    let sequence = [];
+function generatePuzzle() {
+    const puzzle = sudoku.getSudoku("easy");
 
-    for (let i = 0; i < 20; i++) {
-        const difficulty = difficulties[Math.floor(i / 5)];
-        const puzzle = sudoku.getSudoku(difficulty);
-
-        sequence.push({
-            size: 9,
-            puzzle: puzzle.puzzle.replace(/-/g, "."),
-            solution: puzzle.solution
-        });
-    }
-
-    return sequence;
+    return {
+        size: 9,
+        puzzle: puzzle.puzzle.replace(/-/g, "."),
+        solution: puzzle.solution
+    };
 }
 
 io.on("connection", (socket) => {
 
     socket.on("joinGame", (data) => {
 
-        let name;
-        let password = null;
-
-        if (typeof data === "string") {
-            name = data;
-        } else {
-            name = data.name;
-            password = data.password;
-        }
+        const name = data.name;
+        const password = data.password;
 
         players[socket.id] = {
             name,
-            score: 0,
-            level: 0
+            score: 0
         };
 
         if (password === TEACHER_PASSWORD) {
@@ -67,51 +51,43 @@ io.on("connection", (socket) => {
 
     socket.on("startGame", () => {
 
-        // Solo docente può avviare se esiste
-        if (teacherSocketId && socket.id !== teacherSocketId) {
-            return;
-        }
+        if (teacherSocketId && socket.id !== teacherSocketId) return;
+        if (gameStarted) return;
 
-        if (!gameStarted) {
+        gameStarted = true;
+        gameStartTime = Math.floor(Date.now() / 1000);
+        const puzzle = generatePuzzle();
 
-            puzzles = generatePuzzleSequence();
-            gameStarted = true;
-            gameStartTime = Math.floor(Date.now() / 1000);
+        io.emit("gameStarted", puzzle);
 
-            io.emit("gameStarted", {
-                puzzle: puzzles[0]
-            });
+        timerInterval = setInterval(() => {
 
-            timerInterval = setInterval(() => {
+            const now = Math.floor(Date.now() / 1000);
+            const remaining = GAME_DURATION - (now - gameStartTime);
 
-                const now = Math.floor(Date.now() / 1000);
-                const elapsed = now - gameStartTime;
-                const remaining = GAME_DURATION - elapsed;
+            io.emit("timerUpdate", remaining);
 
-                io.emit("timerUpdate", remaining);
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                io.emit("gameOver", players);
+            }
 
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    io.emit("gameOver", players);
-                }
+        }, 1000);
+    });
 
-            }, 1000);
+    socket.on("correctSolution", () => {
+        if (players[socket.id]) {
+            players[socket.id].score += 10;
+            io.emit("updatePlayers", players);
         }
     });
 
     socket.on("disconnect", () => {
         delete players[socket.id];
-
-        if (socket.id === teacherSocketId) {
-            teacherSocketId = null;
-        }
-
         io.emit("updatePlayers", players);
     });
 });
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
-    console.log("Server attivo sulla porta " + PORT);
+server.listen(3000, () => {
+    console.log("Server running on port 3000");
 });
