@@ -9,15 +9,24 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+/* =========================
+   VARIABILI GLOBALI
+========================= */
+
 let players = {};
 let puzzles = [];
+let currentLevel = 0;
 let gameStarted = false;
 let gameStartTime = null;
 let timerInterval = null;
 
-const GAME_DURATION = 90 * 60;
+const GAME_DURATION = 90 * 60; // 90 minuti
 const TEACHER_PASSWORD = "DOCENTE123";
 let teacherSocketId = null;
+
+/* =========================
+   GENERAZIONE PUZZLE
+========================= */
 
 function generatePuzzleBySize(size) {
 
@@ -25,7 +34,7 @@ function generatePuzzleBySize(size) {
         return {
             size: 4,
             puzzle: "1..4.3....2.4..1.",
-            solution: "1234432121344321"
+            solution: "1234432121343412"
         };
     }
 
@@ -37,7 +46,6 @@ function generatePuzzleBySize(size) {
         };
     }
 
-    // 9x9 generato automaticamente
     const puzzle = sudoku.getSudoku("easy");
 
     return {
@@ -47,11 +55,13 @@ function generatePuzzleBySize(size) {
     };
 }
 
+/* =========================
+   SOCKET
+========================= */
+
 io.on("connection", (socket) => {
 
     socket.on("joinGame", (data) => {
-
-     console.log("JOIN DATA:", data);   // 👈 AGGIUNGI QUESTO
 
         const name = data.name;
         const password = data.password;
@@ -62,9 +72,9 @@ io.on("connection", (socket) => {
         };
 
         if (password === TEACHER_PASSWORD) {
-           console.log("DOCENTE RICONOSCIUTO");  // 👈 AGGIUNGI QUESTO
             teacherSocketId = socket.id;
             socket.emit("teacherMode");
+            console.log("DOCENTE RICONOSCIUTO");
         }
 
         io.emit("updatePlayers", players);
@@ -77,9 +87,15 @@ io.on("connection", (socket) => {
 
         gameStarted = true;
         gameStartTime = Math.floor(Date.now() / 1000);
-        const puzzle = generatePuzzle();
+        currentLevel = 0;
 
-        io.emit("gameStarted", puzzle);
+        puzzles = [
+            generatePuzzleBySize(4),
+            generatePuzzleBySize(6),
+            generatePuzzleBySize(9)
+        ];
+
+        io.emit("gameStarted", puzzles[currentLevel]);
 
         timerInterval = setInterval(() => {
 
@@ -97,9 +113,23 @@ io.on("connection", (socket) => {
     });
 
     socket.on("correctSolution", () => {
-        if (players[socket.id]) {
-            players[socket.id].score += 10;
-            io.emit("updatePlayers", players);
+
+        if (!players[socket.id]) return;
+
+        // 🔥 Punteggio diverso per livello
+        if (currentLevel === 0) players[socket.id].score += 5;
+        if (currentLevel === 1) players[socket.id].score += 10;
+        if (currentLevel === 2) players[socket.id].score += 20;
+
+        io.emit("updatePlayers", players);
+
+        currentLevel++;
+
+        if (currentLevel < puzzles.length) {
+            io.emit("nextPuzzle", puzzles[currentLevel]);
+        } else {
+            clearInterval(timerInterval);
+            io.emit("gameOver", players);
         }
     });
 
@@ -108,6 +138,10 @@ io.on("connection", (socket) => {
         io.emit("updatePlayers", players);
     });
 });
+
+/* =========================
+   START SERVER
+========================= */
 
 server.listen(3000, () => {
     console.log("Server running on port 3000");
