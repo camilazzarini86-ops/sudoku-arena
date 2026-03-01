@@ -12,10 +12,7 @@ function startGame() {
 
 socket.on("gameStarted", (data) => {
     console.log("GameStarted DATA:", data);
-    console.log("SIZE:", data?.size);
-    console.log("PUZZLE:", data?.puzzle);
-    console.log("SOLUTION:", data?.solution);
-    loadPuzzle(data);
+    loadPuzzle(data.puzzle);
 });
 
 socket.on("nextPuzzle", (data) => {
