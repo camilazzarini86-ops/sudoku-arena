@@ -34,27 +34,41 @@ function generatePuzzleSequence() {
 
     return sequence;
 }
-
+let teacherSocketId = null;
+const TEACHER_PASSWORD = "DOCENTE123";
 io.on("connection", (socket) => {
 
-    socket.on("joinGame", (name) => {
+   socket.on("joinGame", (data) => {
 
-        players[socket.id] = {
-            name,
-            score: 0,
-            level: 0
-        };
+    let name;
+    let password = null;
 
-        io.emit("updatePlayers", players);
+    if (typeof data === "string") {
+        name = data;
+    } else {
+        name = data.name;
+        password = data.password;
+    }
 
-        if (gameStarted) {
-            socket.emit("gameStarted", {
-                puzzle: puzzles[0]
-            });
-        }
+    players[socket.id] = {
+        name,
+        score: 0,
+        level: 0
+    };
+
+    // SOLO modalità PRO usa password
+    if (password === TEACHER_PASSWORD) {
+        teacherSocketId = socket.id;
+        socket.emit("teacherMode");
+    }
+
+    io.emit("updatePlayers", players);
+});
     });
-
     socket.on("startGame", () => {
+
+    // Se modalità PRO: solo docente può avviare
+    if (teacherSocketId && socket.id !== teacherSocketId) return;
 
         if (!gameStarted) {
 
@@ -111,7 +125,6 @@ io.on("connection", (socket) => {
         delete players[socket.id];
         io.emit("updatePlayers", players);
     });
-});
 
 app.get("/api/single/:difficulty", (req, res) => {
     const difficulty = req.params.difficulty;

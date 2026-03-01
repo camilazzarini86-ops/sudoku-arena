@@ -16,11 +16,17 @@
     </div>
 
     <div>
-        <div id="login" style="margin-bottom:15px;">
-            <input type="text" id="name" placeholder="Nome giocatore">
-            <button onclick="joinGame()">Entra</button>
-            <button onclick="startGame()">Avvia </button>
-        </div>
+       <div id="login" style="margin-bottom:15px;">
+    <input type="text" id="name" placeholder="Nome giocatore">
+    <input type="password" id="password" placeholder="Password docente (solo docente)">
+    <button onclick="joinGame()">Entra</button>
+</div>
+
+<button id="startBtn" style="display:none;" onclick="startGame()">
+    Avvia Torneo
+</button>
+
+<p id="waiting">In attesa del docente...</p>
 
         <div id="game"></div>
     </div>

@@ -6,10 +6,14 @@ let currentPuzzle = null;
 ========================= */
 function joinGame() {
     const name = document.getElementById("name").value;
-    if (!name) return alert("Inserisci un nome");
-    socket.emit("joinGame", name);
-}
+    const password = document.getElementById("password").value;
 
+    socket.emit("joinGame", { name, password });
+}
+socket.on("teacherMode", () => {
+    document.getElementById("startBtn").style.display = "block";
+    document.getElementById("waiting").style.display = "none";
+});
 function startGame() {
     socket.emit("startGame");
 }
